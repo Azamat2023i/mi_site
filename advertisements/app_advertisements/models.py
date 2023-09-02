@@ -1,14 +1,14 @@
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-
+from django.urls import reverse
 User = get_user_model()
 
 class Advertisement(models.Model):
     title = models.CharField("Заголовок", max_length=128)
     description = models.TextField("Описание")
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2) #IntegerField - целые числа .. DecimalField - плавающиеся
-    auction = models.BooleanField("Торг", help_text="Уместен торг или нет")
+    auction = models.BooleanField("Торг", help_text="Уместен или нет")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.CASCADE)
@@ -16,7 +16,7 @@ class Advertisement(models.Model):
     
     class Meta:
         db_table = 'advertisements'
-
+ 
     # def __str__(self):
     #     return f"Advertisement(id={self.id}, title={self.title}, price={self.price})"
 
@@ -40,4 +40,7 @@ class Advertisement(models.Model):
         
         return self.updated_at.strftime("%d.%m.%Y в %H:%M:%S")
 
-  
+    def get_absolute_url(self):
+        return reverse('adv-detail', kwargs={'pk': self.pk})
+
+

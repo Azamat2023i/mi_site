@@ -1,33 +1,38 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Advertisement
+from .models import Advertisement, User
 from .forms import AdvertisementForm
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+
 def index(request):
-    advertisements = Advertisement.objects.all()
-    cntext = {"advertisements": advertisements}
-    return render(request, 'index.html', cntext)
+    title = request.GET.get("query")
+    # print(title)
+    if title:
+        advertisements = Advertisement.objects.filter(title__contains=title)
+    else:
+        advertisements = Advertisement.objects.all()
+    # print(advertisements)
+    # advertisements = Advertisement.objects.all()
+    cntext = {
+        "advertisements": advertisements,
+        "title": title
+        }
+    return render(request, 'app_advertisments/index.html', cntext)
+
 
 def top_sellers(request):
-    return render(request, 'top-sellers.html')
+    users = User.objects.annotate(adv_count=Count('advertisement')).order_by('-adv_count')
+    context = {'users': users}
+    return render(request, 'app_advertisments/top-sellers.html', context)
 
 
-# ------
+def advertisement(request):
+    return render(request, 'app_advertisments/advertisement.html')
 
-# def advertisement_post(request):
-#     if request.method == "POST":
-#         form = AdvertisementForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             advertisement = Advertisement(**form.cleaned_data)
-#             advertisement.user = request.user
-#             advertisement.save()
-#             url = reverse('advertisement_post')
-#             return redirect(url)
-#     else:
-#         form = AdvertisementForm()
-#     context = {'form': form}
-#     return render(request, 'advertisement-post.html', context)
 
+@login_required(login_url=reverse_lazy('login'))
 def advertisement_post(request): 
     if request.method == "POST": 
         form = AdvertisementForm(request.POST, request.FILES) 
@@ -40,32 +45,10 @@ def advertisement_post(request):
     else: 
         form = AdvertisementForm() 
     context = {'form': form} 
-    return render(request, 'advertisement-post.html', context)
-
-# ------
+    return render(request, 'app_advertisments/advertisement-post.html', context)
 
 
-
-
-
-def register(request):
-    return render(request, 'register.html')
-
-def login(request):
-    return render(request, 'login.html')
-
-def profile(request):
-    return render(request, 'profile.html')
-
-def advertisement(request):
-    return render(request, 'advertisement.html')
-
-
-
-
-
-
-
-# def advertisement_post(request):
-#     return render(request, 'advertisement-post.html')
- 
+def advertisments_datail(request, pk):
+    advertisement = Advertisement.objects.get(id=pk)
+    context = {"adv": advertisement}
+    return render(request, 'app_advertisments/advertisement.html', context)
